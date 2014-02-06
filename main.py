@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import urllib
 import urllib2
+import base64
 import json
 
 def main():
@@ -10,20 +11,18 @@ def main():
     bing_search(query)
 
 def bing_search(query):
-    key= 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
-    query = urllib.quote(query)
-    # create credential for authentication
-    user_agent = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1;Trident/4.0; FDM; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 1.1.4322)'
-    credentials = (':%s' % key).encode('base64')[:-1]
-    auth = 'Basic %s' % credentials
-    url = 'https://api.datamarket.azure.com/Bing/SearchWeb/v1/Web?Query=%27'+query+'%27&$top=10&$format=json'
-    request = urllib2.Request(url)
-    request.add_header('Authorization', auth)
-    request.add_header('User-Agent', user_agent)
-    request_opener = urllib2.build_opener()
-    response = request_opener.open(request)
-    response_data = response.read()
-    json_result = json.loads(response_data)
+    bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27gates%27&$top=10&$format=json'
+    #Provide your account key here
+    accountKey = 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
+
+    accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
+    headers = {'Authorization': 'Basic ' + accountKeyEnc}
+    req = urllib2.Request(bingUrl, headers = headers)
+    response = urllib2.urlopen(req)
+    content = response.read()
+    print content
+    #content contains the xml/json response from Bing. 
+    json_result = json.loads(content)
     result_list = json_result['d']['results']
     print getRelJudmnt(result_list)
     return result_list
