@@ -31,14 +31,22 @@ def bing_search(query,targetPrec):
 def getRelevantFB(query, result_list, targetPrec):
     userPrec = 0.0;
     relevant = []
+    nonrel = []
     for result in result_list:
         desc = result[u'Description'].encode("iso-8859-15", "replace")
         title = result[u'Title'].encode("iso-8859-15", "replace")
         url = result[u'Url'].encode("iso-8859-15", "replace")
         print '\nTitle: ' + title + '\n' + 'Url: ' + url + '\n' + 'Desc: ' + desc
         isRel = raw_input('Is this link relevant to your search or not (y or n)?: ')
+        entry = {}
+        entry['Title'] = title
+        entry['Description'] = desc
+        entry['Url'] = url            
         if isRel == 'y' or isRel=='Y':
             userPrec = userPrec+1
+            relevant.append(entry)
+        else :
+            nonrel.append(entry)
 
     print userPrec
     userPrec = userPrec/10
@@ -47,13 +55,13 @@ def getRelevantFB(query, result_list, targetPrec):
     if userPrec == 0 or userPrec >= targetPrec:
         sys.exit()
     else:
-        keyWordEngine(query,targetPrec)
+        keyWordEngine(query,targetPrec,relevant,nonrel)
 
 
-def keyWordEngine(query,targetPrec):
+def keyWordEngine(query,targetPrec,relevant,nonrel):
     print 'Finding new key words'
     print 'Determining new key words'
-    print 'Updated the query' + query
+    print 'Updated the query: ' + query
     bing_search(query,targetPrec)
 
 if __name__ == "__main__":
