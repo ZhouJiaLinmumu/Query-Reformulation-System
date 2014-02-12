@@ -4,11 +4,13 @@ import urllib2
 import base64
 import json
 import sys
+from engine import keyWordEngine
 
 def main():
     query = raw_input('Please enter the query you want to search for : ')
     query = query.replace(" ",'+')
     targetPrec = raw_input('Please enter the precision(@10) you want to search with (0-1) : ')
+    targetPrec = float(targetPrec)
     bing_search(query, targetPrec)
 
 def bing_search(query,targetPrec):
@@ -22,7 +24,7 @@ def bing_search(query,targetPrec):
     req = urllib2.Request(bingUrl, headers = headers)
     response = urllib2.urlopen(req)
     content = response.read()
-    print content
+    #print content
     #content contains the json response from Bing. 
     json_result = json.loads(content)
     result_list = json_result['d']['results']
@@ -48,21 +50,21 @@ def getRelevantFB(query, result_list, targetPrec):
         else :
             nonrel.append(entry)
 
-    print userPrec
     userPrec = userPrec/10
     print userPrec
+    print targetPrec
     # If targetPrecision is achieved
-    if userPrec == 0 or userPrec >= targetPrec:
+    if userPrec == 0:
+        print "Quitting as the relevance feedback score is zero."
+        sys.exit()
+    elif userPrec >= targetPrec:
+        print "Target precision achieved."
         sys.exit()
     else:
-        keyWordEngine(query,targetPrec,relevant,nonrel)
+        query = keyWordEngine(query,targetPrec,relevant,nonrel)
+        bing_search(query,targetPrec)
 
 
-def keyWordEngine(query,targetPrec,relevant,nonrel):
-    print 'Finding new key words'
-    print 'Determining new key words'
-    print 'Updated the query: ' + query
-    bing_search(query,targetPrec)
 
 if __name__ == "__main__":
     main()
