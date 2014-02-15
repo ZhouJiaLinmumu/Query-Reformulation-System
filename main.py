@@ -8,12 +8,14 @@ from engine import keyWordEngine
 
 def main():
     query = raw_input('Please enter the query you want to search for : ')
-    query = query.replace(" ",'+')
     targetPrec = raw_input('Please enter the precision(@10) you want to search with (0-1) : ')
     targetPrec = float(targetPrec)
     bing_search(query, targetPrec)
 
 def bing_search(query,targetPrec):
+    query = query.replace(" ",'+')
+    print 'Updated query - ' + query
+    print '==============================================================='
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27' + query + '%27&$top=10&$format=json'
     print bingUrl
     #Provide your account key here
@@ -34,6 +36,10 @@ def getRelevantFB(query, result_list, targetPrec):
     userPrec = 0.0;
     relevant = []
     nonrel = []
+    if len(result_list)==0:
+        print 'There are no results to this query. So exiting.'
+        sys.exit()
+        
     for result in result_list:
         desc = result[u'Description'].encode("iso-8859-15", "replace")
         title = result[u'Title'].encode("iso-8859-15", "replace")
@@ -51,8 +57,8 @@ def getRelevantFB(query, result_list, targetPrec):
             nonrel.append(entry)
 
     userPrec = userPrec/10
-    print userPrec
-    print targetPrec
+    print 'Precision from user relevance feedback - ' +str(userPrec)
+    print 'Target Precision - ' + str(targetPrec)
     # If targetPrecision is achieved
     if userPrec == 0:
         print "Quitting as the relevance feedback score is zero."
