@@ -7,9 +7,23 @@ import sys
 from engine import keyWordEngine
 
 def main():
-    query = raw_input('Please enter the query you want to search for : ')
-    targetPrec = raw_input('Please enter the precision(@10) you want to search with (0-1) : ')
-    targetPrec = float(targetPrec)
+    while True:
+        query = raw_input('Please enter the query you want to search for : ')
+        if len(query)!=0:
+            break
+        else:
+            print 'Please enter a valid query'
+
+    while True:
+        try:
+            targetPrec = float(raw_input('Please enter the precision(@10) you want to search with (0-1) : '))
+            if targetPrec<0.0 or targetPrec>1.0:
+                print 'Please enter a valid precision value'
+            else:
+                break
+        except ValueError:
+            print 'Please enter a valid precision value'
+    
     bing_search(query, targetPrec)
 
 def bing_search(query,targetPrec):
@@ -45,17 +59,24 @@ def getRelevantFB(query, result_list, targetPrec):
         title = result[u'Title'].encode("iso-8859-15", "replace")
         url = result[u'Url'].encode("iso-8859-15", "replace")
         print '\nTitle: ' + title + '\n' + 'Url: ' + url + '\n' + 'Desc: ' + desc
-        isRel = raw_input('Is this link relevant to your search or not (y or n)?: ')
         entry = {}
         entry['Title'] = title
         entry['Description'] = desc
         entry['Url'] = url            
-        if isRel == 'y' or isRel=='Y':
-            userPrec = userPrec+1
-            relevant.append(entry)
-        else :
-            nonrel.append(entry)
+        
+        while True:
+            isRel = raw_input('Is this link relevant to your search or not (y or n)?: ')
+            if isRel == 'y' or isRel == 'Y':
+                userPrec = userPrec+1
+                relevant.append(entry)
+                break;
+            elif isRel == 'n' or isRel == 'N':
+                nonrel.append(entry)
+                break;
+            else :
+                print 'Please provide a feedback(y or n)'
 
+            
     userPrec = userPrec/10
     print 'Precision from user relevance feedback - ' +str(userPrec)
     print 'Target Precision - ' + str(targetPrec)
