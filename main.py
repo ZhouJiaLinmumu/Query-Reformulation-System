@@ -50,8 +50,8 @@ def getRelevantFB(query, result_list, targetPrec):
     userPrec = 0.0;
     relevant = []
     nonrel = []
-    if len(result_list)==0:
-        print 'There are no results to this query. So exiting.'
+    if len(result_list)<10:
+        print 'There are less than 10 results to this query. So exiting.'
         sys.exit()
         
     for result in result_list:
