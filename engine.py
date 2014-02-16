@@ -1,5 +1,8 @@
 import string
 import math
+import re
+
+
 stopwords = ['a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', 'am', 'among', 'an', 'and', 'any', 'are', 'as',
              'at', 'be', 'because', 'been', 'but', 'by', 'can', 'cannot', 'could', 'dear', 'did', 'do', 'does', 'either', 'else',
              'ever', 'every', 'for', 'from', 'get', 'got', 'had', 'has', 'have', 'he', 'her', 'hers', 'him', 'his', 'how', 'however',
@@ -12,7 +15,7 @@ stopwords = ['a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', '
 
 def keyWordEngine(query,targetPrec,relevant,nonrel):
     query = query.replace('+',' ')
-
+    print "query is " + query
     # finding N for calculating IDF
     N_Rel = len(relevant)
     N_Nonrel = len(nonrel)
@@ -52,7 +55,10 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     
     print 'New words added to query are - ' + first + ' ' + second
     #original query modified
-    return query + ' '+ first + ' '+ second
+    if second=="":
+        return query+' '+first
+    else:
+        return query + ' '+ first + ' '+ second
 
 
 def findWords(RelDoc, NonrelDoc, query):
@@ -81,20 +87,47 @@ def findWords(RelDoc, NonrelDoc, query):
         else:
             finalWeight[word] = gamma * NonrelDoc[word]
 
-    for word in finalWeight:    
-        if finalWeight[word] > finalWeight[first] and word not in query:
-            first = word
-        elif finalWeight[word]<=finalWeight[first] and finalWeight[word] >= finalWeight[second] and word not in query:
-            second = word
-
 
     print "final weights"
-    import operator
-    sorted_x = sorted(finalWeight.iteritems(), key=operator.itemgetter(1))
-    print sorted_x
-    return first,second
-    
 
+
+    sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
+    print sortWeights
+
+    #Add only if the new word is not in query
+    i = 0
+    while True:
+        if sortWeights[i][0] not in query:
+            first = sortWeights[i]
+            break
+        else:
+            i = i+1
+
+    i = i+1
+    while True:
+        if sortWeights[i][0] not in query:
+            second = sortWeights[i]
+            break
+        else:
+            i = i+1
+            
+    #Choosing to add one/two new words to the query
+    if first[1] == second[1]:
+        return first[0], second[0]
+    count = 0
+    total = 0
+    for element in sortWeights:
+        if element[1] < 0 or count>=10:
+            break
+        count = count + 1
+        total = total + element[1]
+    avg = float(total) / float(count)
+    threshold = (avg + first[1])/2.0;
+
+    if second[1] >= threshold:
+        return first[0], second[0]
+    else:
+        return first[0], ""
 
     
 def findWeights(tfDict, idfDict, titleDict, N):
@@ -139,6 +172,7 @@ def findTF(docs):
     tf = {}
     docId = 1
     titleDocTF = {}
+    replace_punctuation = string.maketrans(string.punctuation, ' '*len(string.punctuation))
     #x = nltk.porter.PorterStemmer()
     
     for doc in docs:
@@ -147,7 +181,9 @@ def findTF(docs):
         #Converting to lowercase
         title = title.lower()
         #Removing punctuation
-        title = title.translate(string.maketrans("",""), string.punctuation)
+        title = title.translate(replace_punctuation)
+
+        
         titleList = title.split()
         repeat ={}
         for word in titleList:
@@ -160,13 +196,13 @@ def findTF(docs):
                 repeat[word] = 1
         
         #### Try to figure out how we can give more weightage to title
-        #### Also may be give wikiperdia url more weightage
+        #### Also may be give wikipedia url more weightage
 
         #Converting to lowercase
         vocab = vocab.lower()
 
         #Removing punctuation
-        vocab = vocab.translate(string.maketrans("",""), string.punctuation)
+        vocab = vocab.translate(replace_punctuation)
 
         #Tokenize into word list
         vocabList = vocab.split()
