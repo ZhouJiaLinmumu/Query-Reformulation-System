@@ -21,7 +21,9 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     tfRel,titleRel = findTF(relevant)
     print 'Rel title list'
     print titleRel
+    
     tfNonRel,titleNonRel = findTF(nonrel)
+    
     tfQuery = findQueryTF(query)
     print 'Non Rel title list'
     print titleNonRel
@@ -32,14 +34,14 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     
     #finding Relevant weights
     weightsRel = {}
-    weightsRel = findWeights(tfRel, idfRel, titleRel)
+    weightsRel = findWeights(tfRel, idfRel, titleRel, N_Rel)
 
     print "weights relevant"
     print weightsRel
     
     #finding Nonrelevant weights
     weightsNonRel = {}
-    weightsNonRel = findWeights(tfNonRel, idfNonRel, titleNonRel)
+    weightsNonRel = findWeights(tfNonRel, idfNonRel, titleNonRel, N_Nonrel)
 
     print "weights non relevant "
     print weightsNonRel
@@ -95,7 +97,7 @@ def findWords(RelDoc, NonrelDoc, query):
 
 
     
-def findWeights(tfDict, idfDict, titleList):
+def findWeights(tfDict, idfDict, titleDict, N):
     weight = {}
     for word in tfDict:
         idf = idfDict[word]
@@ -103,8 +105,8 @@ def findWeights(tfDict, idfDict, titleList):
         for doc in tfDict[word]:
             tfTotal = tfTotal + tfDict[word][doc]
         weight[word] = tfTotal * idf
-        if word in titleList: # give more weightage to title words
-            weight[word] = weight[word]*1.2
+        if word in titleDict: # give more weightage to title words
+            weight[word] = weight[word]*(1 + (float(titleDict[word])/float(N))*0.2)
         
     return weight
 
@@ -136,7 +138,7 @@ def findQueryTF(query):
 def findTF(docs):
     tf = {}
     docId = 1
-    titleList = []
+    titleDocTF = {}
     #x = nltk.porter.PorterStemmer()
     
     for doc in docs:
@@ -146,7 +148,17 @@ def findTF(docs):
         title = title.lower()
         #Removing punctuation
         title = title.translate(string.maketrans("",""), string.punctuation)
-        titleList.extend(title.split())
+        titleList = title.split()
+        repeat ={}
+        for word in titleList:
+            if word in titleDocTF and word not in repeat:
+                titleDocTF[word] = titleDocTF[word] + 1
+                repeat[word] = 1
+                
+            elif word not in repeat:
+                titleDocTF[word] = 1
+                repeat[word] = 1
+        
         #### Try to figure out how we can give more weightage to title
         #### Also may be give wikiperdia url more weightage
 
@@ -163,8 +175,7 @@ def findTF(docs):
         vocabList= [w for w in vocabList if not w in stopwords]
         
         for word in vocabList:
-
-            #Adding to dictionary
+           #Adding to dictionary
             if word in tf:
                 if docId in tf[word]:
                     tf[word][docId] = tf[word][docId] + 1
@@ -177,6 +188,6 @@ def findTF(docs):
 
         docId = docId + 1 
 
-    return tf, titleList
+    return tf, titleDocTF
     
     
