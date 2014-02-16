@@ -18,25 +18,28 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     N_Nonrel = len(nonrel)
 
     #finding TF
-    tfRel =findTF(relevant)
-    tfNonRel = findTF(nonrel)
-    tfQuery =findQueryTF(query)
-
+    tfRel,titleRel = findTF(relevant)
+    print 'Rel title list'
+    print titleRel
+    tfNonRel,titleNonRel = findTF(nonrel)
+    tfQuery = findQueryTF(query)
+    print 'Non Rel title list'
+    print titleNonRel
+    
     #finding IDF
     idfRel = findIDF(tfRel, N_Rel)
     idfNonRel = findIDF(tfNonRel, N_Nonrel)
-
     
     #finding Relevant weights
     weightsRel = {}
-    weightsRel = findWeights(tfRel, idfRel)
+    weightsRel = findWeights(tfRel, idfRel, titleRel)
 
     print "weights relevant"
     print weightsRel
     
     #finding Nonrelevant weights
     weightsNonRel = {}
-    weightsNonRel = findWeights(tfNonRel, idfNonRel)
+    weightsNonRel = findWeights(tfNonRel, idfNonRel, titleNonRel)
 
     print "weights non relevant "
     print weightsNonRel
@@ -92,7 +95,7 @@ def findWords(RelDoc, NonrelDoc, query):
 
 
     
-def findWeights(tfDict, idfDict):
+def findWeights(tfDict, idfDict, titleList):
     weight = {}
     for word in tfDict:
         idf = idfDict[word]
@@ -100,6 +103,8 @@ def findWeights(tfDict, idfDict):
         for doc in tfDict[word]:
             tfTotal = tfTotal + tfDict[word][doc]
         weight[word] = tfTotal * idf
+        if word in titleList: # give more weightage to title words
+            weight[word] = weight[word]*1.2
         
     return weight
 
@@ -131,10 +136,17 @@ def findQueryTF(query):
 def findTF(docs):
     tf = {}
     docId = 1
+    titleList = []
     #x = nltk.porter.PorterStemmer()
     
     for doc in docs:
         vocab = doc['Description']+' '+doc['Title']
+        title = doc['Title']
+        #Converting to lowercase
+        title = title.lower()
+        #Removing punctuation
+        title = title.translate(string.maketrans("",""), string.punctuation)
+        titleList.extend(title.split())
         #### Try to figure out how we can give more weightage to title
         #### Also may be give wikiperdia url more weightage
 
@@ -165,6 +177,6 @@ def findTF(docs):
 
         docId = docId + 1 
 
-    return tf
+    return tf, titleList
     
     
