@@ -11,6 +11,8 @@ stopwords = ['a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', '
 
 
 def keyWordEngine(query,targetPrec,relevant,nonrel):
+    query = query.replace('+',' ')
+
     # finding N for calculating IDF
     N_Rel = len(relevant)
     N_Nonrel = len(nonrel)
@@ -18,40 +20,88 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     #finding TF
     tfRel =findTF(relevant)
     tfNonRel = findTF(nonrel)
+    tfQuery =findQueryTF(query)
 
     #finding IDF
-    idfRel = find
-    IDF(tfRel, N_Rel)
+    idfRel = findIDF(tfRel, N_Rel)
     idfNonRel = findIDF(tfNonRel, N_Nonrel)
 
-    #finding terms with most weightage
-    (maxRel,secMaxRel) = findWeights(tfRel, idfRel, query.split())
-    #(maxNonRel, secMaxNonRel) = findWeights(tfNonRel, idfNonRel)
+    
+    #finding Relevant weights
+    weightsRel = {}
+    weightsRel = findWeights(tfRel, idfRel)
 
-    print 'New words added to query are - ' + str(maxRel) + ' ' + str(secMaxRel)
+    print "weights relevant"
+    print weightsRel
+    
+    #finding Nonrelevant weights
+    weightsNonRel = {}
+    weightsNonRel = findWeights(tfNonRel, idfNonRel)
+
+    print "weights non relevant "
+    print weightsNonRel
+
+    #implementing Rochio to find the new query
+    (first,second) = findWords(weightsRel, weightsNonRel, tfQuery)
+
+    
+    print 'New words added to query are - ' + first + ' ' + second
     #original query modified
-    return query + ' '+ maxRel + ' '+ secMaxRel
+    return query + ' '+ first + ' '+ second
 
-def findWeights(tfDict, idfDict, query):
-    weight = {}
+
+def findWords(RelDoc, NonrelDoc, query):
+    alpha = 1
+    beta = 0.75
+    gamma = -0.15
+
+    finalWeight = {}
     first = ''
     second = ''
-    weight[first] = 0
-    weight[second] = 0
+    finalWeight[first]=0
+    finalWeight[second]=0
+    print "Query is "
+    print query
+    for word in RelDoc:
+        finalWeight[word] = beta * RelDoc[word]
+    for word in query:
+        if word in finalWeight:
+            finalWeight[word] = finalWeight[word] + alpha * query[word]
+        else:
+            finalWeight[word] = alpha * query[word]
+                        
+    for word in NonrelDoc:
+        if word in finalWeight:
+            finalWeight[word] = finalWeight[word] + gamma * NonrelDoc[word]
+        else:
+            finalWeight[word] = gamma * NonrelDoc[word]
 
+    for word in finalWeight:    
+        if finalWeight[word] > finalWeight[first] and word not in query:
+            first = word
+        elif finalWeight[word]<=finalWeight[first] and finalWeight[word] >= finalWeight[second] and word not in query:
+            second = word
+
+
+    print "final weights"
+    import operator
+    sorted_x = sorted(finalWeight.iteritems(), key=operator.itemgetter(1))
+    print sorted_x
+    return first,second
+    
+
+
+    
+def findWeights(tfDict, idfDict):
+    weight = {}
     for word in tfDict:
         idf = idfDict[word]
         tfTotal = 0
         for doc in tfDict[word]:
             tfTotal = tfTotal + tfDict[word][doc]
         weight[word] = tfTotal * idf
-    
-        if weight[word]>weight[first] and word not in query:
-            first = word
-        if weight[word]<weight[first] and weight[word]>weight[second] and word not in query:
-            second = word
-            
-    return (first,second)
+        
+    return weight
 
 
 def findIDF(tf,N):
@@ -61,7 +111,22 @@ def findIDF(tf,N):
         idf[word] = math.log10(float(N)/float(df))+1
     return idf
     
-
+def findQueryTF(query):
+    tf = {}
+    vocab = query
+    #Converting to lowercase
+    vocab = vocab.lower()
+    #Removing punctuation
+    vocab = vocab.translate(string.maketrans("",""), string.punctuation)
+    #Tokenize into word list
+    vocabList = vocab.split()
+    for word in vocabList:
+      #Adding to dictionary
+        if word in tf:
+            tf[word] = tf[word] + 1
+        else:
+            tf[word] = 1
+    return tf
 
 def findTF(docs):
     tf = {}
@@ -89,7 +154,7 @@ def findTF(docs):
 
             #Adding to dictionary
             if word in tf:
-                if num in tf[word]:
+                if docId in tf[word]:
                     tf[word][docId] = tf[word][docId] + 1
                 else:
                     tf[word][docId] = 1
