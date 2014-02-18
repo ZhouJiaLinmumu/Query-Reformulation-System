@@ -133,7 +133,7 @@ def addPair(index ,QueryList, pair, weight, added):
             print '===== in 3rd'
         elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
             print '===== in 4th'
-            QueryList,added = addPair(index+1, QueryList, pair, added)
+            QueryList,added = addPair(index+1, QueryList, pair, weight, added)
         else:
             print '==== in 5th'            
             #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
