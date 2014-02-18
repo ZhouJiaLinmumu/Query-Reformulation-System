@@ -41,6 +41,10 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     #implemented Rochio to find the new query
     (first,second) = findWords(weightsRel, weightsNonRel, tfQuery)
 
+    # if no new words to be added
+    if first =='' and second =='':
+        return ''
+
     finalList = []
     
     print 'New words added to query are - ' + first + ' ' + second
@@ -188,6 +192,7 @@ def findWords(RelDoc, NonrelDoc, query):
             i = i+1
     
     # If top two words have similar weights then take both
+    # NOTE - in case first and second are empty then we will return in this check
     if checkSimilarWeights(finalWeight[first],finalWeight[second]):
         return first,second
 

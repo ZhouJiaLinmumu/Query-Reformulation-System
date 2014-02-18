@@ -90,9 +90,11 @@ def getRelevantFB(query, result_list, targetPrec):
         sys.exit()
     else:
         query = keyWordEngine(query,targetPrec,relevant,nonrel)
-        bing_search(query,targetPrec)
-
-
+        if query == '':
+            print "Quitting as query is unchanged"
+            sys.exit()
+        else:
+            bing_search(query,targetPrec)
 
 if __name__ == "__main__":
     main()
