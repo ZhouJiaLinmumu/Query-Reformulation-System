@@ -2,6 +2,7 @@ import string
 import math
 import re
 import itertools
+import heapq
 
 stopwords = ['a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', 'am', 'among', 'an', 'and', 'any', 'are', 'as',
              'at', 'be', 'because', 'been', 'but', 'by', 'can', 'cannot', 'could', 'dear', 'did', 'do', 'does', 'either', 'else',
@@ -55,7 +56,7 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
         finalList.append(second)
 
     #find the best order of the words in the query        
-    finalOrderedList = findCombination(finalList, relevant)
+    finalOrderedList = findPermutations(finalList, relevant)
 
     modifiedQuery = []
     for wordList in finalOrderedList:
@@ -77,59 +78,65 @@ def searchResults(phrase, docs):
         matches = re.findall(re.escape(phrase[0])+'\s'+re.escape(phrase[1]), content)
         weight = weight + len(matches)
     return weight
-            
-    
 
-def findCombination(queryList,docRel):
-    maxPair = 0
+
+def findPermutations(queryList,docRel):
     pairWeight = {}
-    correctQueryList = []
+    bestQueryList = []
+    # find all the permutations of the query terms in pairs
     for pair in itertools.permutations(queryList, 2):
+        # find the number of times the permutation occurs in relevants docs 
         pairWeight[pair] = searchResults(pair,docRel)
     sortedPairs = sorted(pairWeight.items(), key=lambda x:x[1], reverse = True)
-
-    print "sorted pair list"
     print sortedPairs
-
+    # combine the pairs in order of decreasing weights.
     N = len(queryList)
     added = 0
     for pair in sortedPairs:
-        print "for each pair"
-        print pair[0]
-        correctQueryList,added = addPair(0, correctQueryList, pair[0], added)
-        if added == N:
+        print '=== Pair '
+        print pair
+        bestQueryList,added = addPair(0, bestQueryList, pair[0],pair[1], added)
+        if added == N: # break if all query terms are added
             break
         
-    print "corrected QueryList clusters"
-    print correctQueryList
-    return correctQueryList
+    print "Best order found is - "
+    print bestQueryList
+    return bestQueryList
 
-def addPair(index ,QueryList, pair, added):
-    
+def addPair(index ,QueryList, pair, weight, added):
+    print '==== Querylist === '
+    print QueryList
+    print '==== end QueryList === '    
     if len(QueryList)<=index:
+        print '=== main if' + ' '+ pair[0] + ' ' + pair[1]
         QueryList.append([])
         QueryList[index].append(pair[0])
         QueryList[index].append(pair[1])
+        print '=== main if end'
         added = added + 2
     else:
         n = len(QueryList[index])
         if pair[0] in QueryList[index] and pair[1] in QueryList[index]:
+            print '===== in 1st'
             return QueryList,added
         if pair[0]==QueryList[index][n-1]:
             QueryList[index].append(pair[1])
             added = added + 1
+            print '===== in 2nd'
         elif pair[1]==QueryList[index][0]:
             QueryList[index].insert(0,pair[0])
             added = added + 1
+            print '===== in 3rd'
         elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
+            print '===== in 4th'
             QueryList,added = addPair(index+1, QueryList, pair, added)
-        #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
-        #else if first word in pair equals first word in querylist, or vice versa, ignore
+        else:
+            print '==== in 5th'            
+            #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
+            #else if first word in pair equals first word in querylist, or vice versa, ignore               
             
-    print QueryList
+    #print QueryList
     return QueryList,added
-
-
 
 def findWords(RelDoc, NonrelDoc, query):
     alpha = 1
@@ -158,44 +165,49 @@ def findWords(RelDoc, NonrelDoc, query):
         else:
             finalWeight[word] = gamma * NonrelDoc[word]
 
-    sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
+    # find top 15 words from the finalweights using a heap, runs faster than sorting the whole list
+    #sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
+    sortWeights = heapq.nlargest(15,finalWeight,key=finalWeight.get);
     print sortWeights
 
     #Finding top two words by weigths such that the word is not in query
     i = 0
-    while True:
-        if sortWeights[i][0] not in query:
+    while i < len(sortWeights):
+        if sortWeights[i] not in query:
             first = sortWeights[i]
             break
         else:
             i = i+1
 
     i = i+1
-    while True:
-        if sortWeights[i][0] not in query:
+    while i < len(sortWeights):
+        if sortWeights[i] not in query:
             second = sortWeights[i]
             break
         else:
             i = i+1
-            
-    #Choosing whether to add one or two new words to the query
-    # if top two words have similar weights then take both
-    if checkSimilarWeights(first[1],second[1]):
-        return first[0], second[0]
+    
+    # If top two words have similar weights then take both
+    if checkSimilarWeights(finalWeight[first],finalWeight[second]):
+        return first,second
+
+    # Choosing whether to add one or two new words to the query
+    # Taking the avg of top 10 weigths. Take the avg of first term and this avg.
+    # Lets call it threshold. if the second term weight is greater than this threshold then take it as well.
     count = 0
     total = 0
-    for element in sortWeights:
-        if element[1] < 0 or count>=10:
+    for word in sortWeights:
+        if finalWeight[word] < 0:
             break
         count = count + 1
-        total = total + element[1]
+        total = total + finalWeight[word]
     avg = float(total) / float(count)
-    threshold = (avg + first[1])/2.0;
+    threshold = (avg + finalWeight[first])/2.0;
 
-    if second[1] >= threshold:
-        return first[0], second[0]
+    if finalWeight[second] >= threshold:
+        return first, second
     else:
-        return first[0], ""
+        return first, ""
 
     
 def findWeights(tfDict, idfDict, titleDict, N):
@@ -296,7 +308,7 @@ def findTF(docs):
 def checkSimilarWeights(first, second):
     # check if second and first are close values
     # close is defined by 5% tolerance
-    if (first - 0.05*first) <= second and second <= (first + 0.05*first):
+    if (first - 0.05*first) <= second:
         return True
     else:
         return False
