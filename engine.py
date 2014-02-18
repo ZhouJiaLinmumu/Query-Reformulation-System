@@ -65,7 +65,8 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     modifiedQuery = []
     for wordList in finalOrderedList:
         for word in wordList:
-            modifiedQuery.append(word)
+            if word not in modifiedQuery:
+                modifiedQuery.append(word)
             
     #clusters are just appended for now
     return " ".join(modifiedQuery)
@@ -122,7 +123,7 @@ def addPair(index ,QueryList, pair, weight, added, useless):
         added = added + 2
     else:
         n = len(QueryList[index])
-        if pair[0] in QueryList[index] and pair[1] in QueryList[index]:
+        if (not isNewWord(pair[0], QueryList)) and (not isNewWord(pair[1], QueryList)):
             print '===== in 1st'
             return QueryList,added,useless
         if pair[0]==QueryList[index][n-1]:
@@ -139,7 +140,14 @@ def addPair(index ,QueryList, pair, weight, added, useless):
                 QueryList[index].insert(0,pair[0])
             added = added + 1
             print '===== in 3rd'
-        elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
+        elif pair[0]==QueryList[index][0] and isNewWord(pair[1], QueryList):
+            if(weight==0):
+                useless.add(pair[1])
+            else:
+                QueryList[index].append(pair[1])
+            added = added + 1
+            print '===== in 3.5rd'
+        elif isNewWord(pair[0], QueryList) and isNewWord(pair[1],QueryList):
             print '===== in 4th'
             if(weight==0):
                 useless.add(pair[0])
@@ -147,24 +155,27 @@ def addPair(index ,QueryList, pair, weight, added, useless):
             else:
                 QueryList,added,useless = addPair(index+1, QueryList,pair, weight, added, useless)
         else:
-            if(weight==0):
-                print '==== in 5th'
-                if pair[0] not in QueryList[index]:
-                    print '==== in 6th'
-                    useless.add(pair[0])
-                else:
-                    uesless.add(pair[1])
+            print '==== in 5th'                
+            if isNewWord(pair[0],QueryList):
+                print '==== in 6th'
+                useless.add(pair[0])
+            elif isNewWord(pair[1],QueryList):
+                print '==== in 7th'
+                useless.add(pair[1])
             #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
             #else if first word in pair equals first word inquerylist, or vice versa, ignore
 
-    #print QueryList
+    print '==== Return Querylist === '
+    print QueryList
+    print useless
+    print '==== Return end QueryList === '
     return QueryList,added,useless
 
-def isAlreadyAdded(word, QueryList):
+def isNewWord(word, QueryList):
     for wordlist in QueryList:
         if word in wordlist:
-            return True
-    return False
+            return False
+    return True
 
 def findWords(RelDoc, NonrelDoc, query):
     alpha = 1
