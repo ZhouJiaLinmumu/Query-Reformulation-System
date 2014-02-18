@@ -87,6 +87,7 @@ def searchResults(phrase, docs):
 def findPermutations(queryList,docRel):
     pairWeight = {}
     bestQueryList = []
+    useless = set()
     # find all the permutations of the query terms in pairs
     for pair in itertools.permutations(queryList, 2):
         # find the number of times the permutation occurs in relevants docs 
@@ -99,18 +100,19 @@ def findPermutations(queryList,docRel):
     for pair in sortedPairs:
         print '=== Pair '
         print pair
-        bestQueryList,added = addPair(0, bestQueryList, pair[0],pair[1], added)
+        bestQueryList,added,useless = addPair(0, bestQueryList, pair[0],pair[1], added, useless)
         if added == N: # break if all query terms are added
             break
-        
+
+    bestQueryList.append(useless)        
     print "Best order found is - "
     print bestQueryList
     return bestQueryList
 
-def addPair(index ,QueryList, pair, weight, added):
+def addPair(index ,QueryList, pair, weight, added, useless):
     print '==== Querylist === '
     print QueryList
-    print '==== end QueryList === '    
+    print '==== end QueryList === '
     if len(QueryList)<=index:
         print '=== main if' + ' '+ pair[0] + ' ' + pair[1]
         QueryList.append([])
@@ -122,25 +124,47 @@ def addPair(index ,QueryList, pair, weight, added):
         n = len(QueryList[index])
         if pair[0] in QueryList[index] and pair[1] in QueryList[index]:
             print '===== in 1st'
-            return QueryList,added
+            return QueryList,added,useless
         if pair[0]==QueryList[index][n-1]:
-            QueryList[index].append(pair[1])
+            if(weight==0):
+                useless.add(pair[1])
+            else:
+                QueryList[index].append(pair[1])
             added = added + 1
             print '===== in 2nd'
         elif pair[1]==QueryList[index][0]:
-            QueryList[index].insert(0,pair[0])
+            if(weight==0):
+                useless.add(pair[0])
+            else:
+                QueryList[index].insert(0,pair[0])
             added = added + 1
             print '===== in 3rd'
         elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
             print '===== in 4th'
-            QueryList,added = addPair(index+1, QueryList, pair, weight, added)
+            if(weight==0):
+                useless.add(pair[0])
+                uesless.add(pair[1])
+            else:
+                QueryList,added,useless = addPair(index+1, QueryList,pair, weight, added, useless)
         else:
-            print '==== in 5th'            
+            if(weight==0):
+                print '==== in 5th'
+                if pair[0] not in QueryList[index]:
+                    print '==== in 6th'
+                    useless.add(pair[0])
+                else:
+                    uesless.add(pair[1])
             #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
-            #else if first word in pair equals first word in querylist, or vice versa, ignore               
-            
+            #else if first word in pair equals first word inquerylist, or vice versa, ignore
+
     #print QueryList
-    return QueryList,added
+    return QueryList,added,useless
+
+def isAlreadyAdded(word, QueryList):
+    for wordlist in QueryList:
+        if word in wordlist:
+            return True
+    return False
 
 def findWords(RelDoc, NonrelDoc, query):
     alpha = 1
