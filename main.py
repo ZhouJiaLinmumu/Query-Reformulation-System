@@ -78,6 +78,7 @@ def getRelevantFB(query, result_list, targetPrec):
 
             
     userPrec = userPrec/10
+    print '==============================================================='
     print 'Precision from user relevance feedback - ' +str(userPrec)
     print 'Target Precision - ' + str(targetPrec)
     # If targetPrecision is achieved

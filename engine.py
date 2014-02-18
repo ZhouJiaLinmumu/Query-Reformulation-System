@@ -22,13 +22,9 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
 
     #finding TF
     tfRel,titleRel = findTF(relevant)
-
-    
     tfNonRel,titleNonRel = findTF(nonrel)
-    
     tfQuery = findQueryTF(query)
 
-    
     #finding IDF
     idfRel = findIDF(tfRel, N_Rel)
     idfNonRel = findIDF(tfNonRel, N_Nonrel)
@@ -37,20 +33,17 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
     weightsRel = {}
     weightsRel = findWeights(tfRel, idfRel, titleRel, N_Rel)
 
-
-    
     #finding Nonrelevant weights
     weightsNonRel = {}
     weightsNonRel = findWeights(tfNonRel, idfNonRel, titleNonRel, N_Nonrel)
 
-
-
-    #implementing Rochio to find the new query
+    #implemented Rochio to find the new query
     (first,second) = findWords(weightsRel, weightsNonRel, tfQuery)
 
     finalList = []
     
     print 'New words added to query are - ' + first + ' ' + second
+    print 'Determining the best order of query terms'
     #original query modified
     query = query.split()
     if second=="":
@@ -149,8 +142,10 @@ def findWords(RelDoc, NonrelDoc, query):
     finalWeight[first]=0
     finalWeight[second]=0
 
+    #finding the final weights based on Rochio algorithm
     for word in RelDoc:
         finalWeight[word] = beta * RelDoc[word]
+
     for word in query:
         if word in finalWeight:
             finalWeight[word] = finalWeight[word] + alpha * query[word]
@@ -163,11 +158,10 @@ def findWords(RelDoc, NonrelDoc, query):
         else:
             finalWeight[word] = gamma * NonrelDoc[word]
 
-
     sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
+    print sortWeights
 
-
-    #Add only if the new word is not in query
+    #Finding top two words by weigths such that the word is not in query
     i = 0
     while True:
         if sortWeights[i][0] not in query:
@@ -184,8 +178,9 @@ def findWords(RelDoc, NonrelDoc, query):
         else:
             i = i+1
             
-    #Choosing to add one/two new words to the query
-    if first[1] == second[1]:
+    #Choosing whether to add one or two new words to the query
+    # if top two words have similar weights then take both
+    if checkSimilarWeights(first[1],second[1]):
         return first[0], second[0]
     count = 0
     total = 0
@@ -298,4 +293,11 @@ def findTF(docs):
 
     return tf, titleDocTF
     
-    
+def checkSimilarWeights(first, second):
+    # check if second and first are close values
+    # close is defined by 5% tolerance
+    if (first - 0.05*first) <= second and second <= (first + 0.05*first):
+        return True
+    else:
+        return False
+        
