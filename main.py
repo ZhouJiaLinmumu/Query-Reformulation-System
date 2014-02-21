@@ -92,6 +92,7 @@ def getRelevantFB(query, result_list, targetPrec):
             
     userPrec = userPrec/10
 
+    print '==============================================================='
     print "FEEDBACK SUMMARY"
     print "Query " + query.replace('%20',' ')
     print "Precision from user relevance feedback - " + str(userPrec)
