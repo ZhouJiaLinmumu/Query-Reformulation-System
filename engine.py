@@ -111,7 +111,7 @@ def findPermutations(queryList,docRel):
 
     bestQueryList.append(useless)        
     print "Best order found is - "
-    #print bestQueryList
+    print bestQueryList
     return bestQueryList
 
 def addPair(index ,QueryList, pair, weight, added, useless):

@@ -30,7 +30,6 @@ def main():
 
 def bing_search(query,targetPrec):
     query = query.replace(" ","%20")
-    #print 'Updated query - ' + query
     print '==============================================================='
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27' + query + '%27&$top=10&$format=json'
     print bingUrl
@@ -106,14 +105,12 @@ def getRelevantFB(query, result_list, targetPrec):
         print "Desired precision reached, done"
         sys.exit()
     else:
+		print "Indexing results ...."
         query = keyWordEngine(query,targetPrec,relevant,nonrel)
         if query == '':
             print "Quitting as query is unchanged"
             sys.exit()
-        else:
-            print "Still below the desired precision of 1.0"
-            print "Indexing results ...."
-            print "Indexing results ...."
+        else:            
             bing_search(query,targetPrec)
 
 if __name__ == "__main__":
