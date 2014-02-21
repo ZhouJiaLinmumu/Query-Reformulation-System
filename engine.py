@@ -66,7 +66,9 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
         finalList.append(first)
         finalList.append(second)
 
+    
     #find the best order of the words in the query        
+    print "Determining the best order of terms"
     finalOrderedList = findPermutations(finalList, relevant)
 
     modifiedQuery = []
@@ -103,60 +105,49 @@ def findPermutations(queryList,docRel):
     sortedPairs = sorted(pairWeight.items(), key=lambda x:x[1], reverse = True)
     # combine the pairs in order of decreasing weights.
     N = len(queryList)
-    added = 0
-    for pair in sortedPairs:
-        bestQueryList,added,useless = addPair(0, bestQueryList, pair[0],pair[1], added, useless)
-        if added == N: # break if all query terms are added
-            break
 
-    bestQueryList.append(useless)        
+    for pair in sortedPairs:
+        bestQueryList,useless = addPair(0, bestQueryList, pair[0],pair[1], useless)
+
+    bestQueryList.append(useless)
+    
     print "Best order found is - "
     print bestQueryList
     return bestQueryList
 
-def addPair(index ,QueryList, pair, weight, added, useless):
+def addPair(index ,QueryList, pair, weight, useless):
     if len(QueryList)<=index:
         QueryList.append([])
         QueryList[index].append(pair[0])
         QueryList[index].append(pair[1])
-        added = added + 2
     else:
         n = len(QueryList[index])
-        if (not isNewWord(pair[0], QueryList)) and (not isNewWord(pair[1], QueryList)):
-            return QueryList,added,useless
+        if (not isNewWord(pair[0], QueryList, useless)) and (not isNewWord(pair[1], QueryList, useless)):
+            return QueryList,useless
         if pair[0]==QueryList[index][n-1]:
             if(weight==0):
                 useless.add(pair[1])
             else:
                 QueryList[index].append(pair[1])
-            added = added + 1
         elif pair[1]==QueryList[index][0]:
             if(weight==0):
                 useless.add(pair[0])
             else:
                 QueryList[index].insert(0,pair[0])
-            added = added + 1
-        elif pair[0]==QueryList[index][0] and isNewWord(pair[1], QueryList):
-            if(weight==0):
-                useless.add(pair[1])
-            else:
-                QueryList[index].append(pair[1])
-            added = added + 1
-        elif isNewWord(pair[0], QueryList) and isNewWord(pair[1],QueryList):
-            if(weight==0):
-                useless.add(pair[0])
-                useless.add(pair[1])
-            else:
-                QueryList,added,useless = addPair(index+1, QueryList,pair, weight, added, useless)
-        else:
-            if isNewWord(pair[0],QueryList):
-                useless.add(pair[0])
-            elif isNewWord(pair[1],QueryList):
-                useless.add(pair[1])
-                            
-    return QueryList,added,useless
 
-def isNewWord(word, QueryList):
+        elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
+            if(weight==0):
+                useless.add(pair[0])
+                useless.add(pair[1])
+            else:
+                QueryList,useless = addPair(index+1, QueryList,pair, weight, useless)
+
+                            
+    return QueryList,useless
+
+def isNewWord(word, QueryList, useless):
+    if word in useless:
+        return False
     for wordlist in QueryList:
         if word in wordlist:
             return False
@@ -279,7 +270,6 @@ def findTF(docs):
         for domain in qualityDocs:
             if re.match(r'.*'+re.escape(domain)+'.*', url):
                 wordWeight = 1 + qualityFactor
-                print "wordWeight changed"
                 break
                 
             else:
