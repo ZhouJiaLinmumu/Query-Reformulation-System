@@ -68,7 +68,7 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
             if word not in modifiedQuery:
                 modifiedQuery.append(word)
             
-    #clusters are just appended for now
+    #clusters are appended
     return " ".join(modifiedQuery)
 
 
@@ -151,7 +151,7 @@ def addPair(index ,QueryList, pair, weight, added, useless):
             print '===== in 4th'
             if(weight==0):
                 useless.add(pair[0])
-                uesless.add(pair[1])
+                useless.add(pair[1])
             else:
                 QueryList,added,useless = addPair(index+1, QueryList,pair, weight, added, useless)
         else:
@@ -204,9 +204,9 @@ def findWords(RelDoc, NonrelDoc, query):
         else:
             finalWeight[word] = gamma * NonrelDoc[word]
 
-    # find top 15 words from the finalweights using a heap, runs faster than sorting the whole list
+    # find top 10 words(excluding query terms) from the finalweights using a heap, runs faster than sorting the whole list
     #sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
-    sortWeights = heapq.nlargest(15,finalWeight,key=finalWeight.get);
+    sortWeights = heapq.nlargest(10 + len(query),finalWeight,key=finalWeight.get);
     print sortWeights
 
     #Finding top two words by weigths such that the word is not in query
