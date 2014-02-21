@@ -293,8 +293,14 @@ def findTF(docs):
     titleDocTF = {}
     replace_punctuation = string.maketrans(string.punctuation, ' '*len(string.punctuation))
     #x = nltk.porter.PorterStemmer()
-    
+    wikiFactor = 1
     for doc in docs:
+        url = doc['Url']
+        if re.match(r'.*wikipedia\.org.*', url):
+            wikiFactor = 1.2
+            print "wiki factor changed"
+        else:
+            wikiFactor = 1
         vocab = doc['Description']+' '+doc['Title']
         title = doc['Title']
         #Converting to lowercase
@@ -328,12 +334,14 @@ def findTF(docs):
 
         #Remove stop words
         vocabList= [w for w in vocabList if not w in stopwords]
+
+
         
         for word in vocabList:
            #Adding to dictionary
             if word in tf:
                 if docId in tf[word]:
-                    tf[word][docId] = tf[word][docId] + 1
+                    tf[word][docId] = tf[word][docId] + 1 * wikiFactor
                 else:
                     tf[word][docId] = 1
             else:
