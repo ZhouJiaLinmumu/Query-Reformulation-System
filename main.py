@@ -34,9 +34,6 @@ def bing_search(query,targetPrec):
     print '==============================================================='
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27' + query + '%27&$top=10&$format=json'
     print bingUrl
-    #GET THIS FROM INPUT
-    #accountKey = 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
-    print accountKey
     accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
     headers = {'Authorization': 'Basic ' + accountKeyEnc}
     req = urllib2.Request(bingUrl, headers = headers)
