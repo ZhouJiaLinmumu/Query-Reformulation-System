@@ -10,7 +10,7 @@ accountKey = ''
 
 def main():
     if len(sys.argv) != 4:
-        print 'Running command is python main.py <bing account key> <precision> <query>'
+        print 'Running command is python main.py <bing account key> <precision> \'<query>\''
         sys.exit()
     
     query = sys.argv[3]
