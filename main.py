@@ -6,24 +6,25 @@ import json
 import sys
 from engine import keyWordEngine
 
+accountKey = ''
 
 def main():
-    while True:
-        query = raw_input('Please enter the query you want to search for : ')
-        if len(query)!=0:
-            break
-        else:
-            print 'Please enter a valid query'
-
-    while True:
-        try:
-            targetPrec = float(raw_input('Please enter the precision(@10) you want to search with (0-1) : '))
-            if targetPrec<0.0 or targetPrec>1.0:
-                print 'Please enter a valid precision value'
-            else:
-                break
-        except ValueError:
-            print 'Please enter a valid precision value'
+    if len(sys.argv) != 4:
+        print 'Running command is python main.py <bing account key> <precision> <query>'
+        sys.exit()
+    
+    query = sys.argv[3]
+    targetPrec = sys.argv[2]
+    global accountKey
+    accountKey = sys.argv[1]
+    try:
+        targetPrec = float(targetPrec)
+        if targetPrec<=0.0 or targetPrec>1.0:
+            print 'Please enter a valid precision value (0-1)'
+            sys.exit()
+    except ValueError:
+        print 'Please enter a valid precision value (0-1)'
+        sys.exit()
     
     bing_search(query, targetPrec)
 
@@ -34,16 +35,14 @@ def bing_search(query,targetPrec):
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27' + query + '%27&$top=10&$format=json'
     print bingUrl
     #GET THIS FROM INPUT
-    accountKey = 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
-
+    #accountKey = 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
+    print accountKey
     accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
     headers = {'Authorization': 'Basic ' + accountKeyEnc}
     req = urllib2.Request(bingUrl, headers = headers)
     response = urllib2.urlopen(req)
     content = response.read()
-    #print content
     #content contains the json response from Bing.
-
     json_result = json.loads(content)
     result_list = json_result['d']['results']
     

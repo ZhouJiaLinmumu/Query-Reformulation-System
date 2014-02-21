@@ -110,7 +110,7 @@ def findPermutations(queryList,docRel):
             break
 
     bestQueryList.append(useless)        
-    #print "Best order found is - "
+    print "Best order found is - "
     #print bestQueryList
     return bestQueryList
 
@@ -153,9 +153,7 @@ def addPair(index ,QueryList, pair, weight, added, useless):
                 useless.add(pair[0])
             elif isNewWord(pair[1],QueryList):
                 useless.add(pair[1])
-            #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
-            #else if first word in pair equals first word inquerylist, or vice versa, ignore
-                
+                            
     return QueryList,added,useless
 
 def isNewWord(word, QueryList):
@@ -189,7 +187,6 @@ def findWords(RelDoc, NonrelDoc, query):
             finalWeight[word] = gamma * NonrelDoc[word]
 
     # find top 10 words(excluding query terms) from the finalweights using a heap, runs faster than sorting the whole list
-    #sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
     sortWeights = heapq.nlargest(10 + len(query),finalWeight,key=finalWeight.get)
 
     #Finding top two words by weigths such that the word is not in query
@@ -249,7 +246,7 @@ def findWeights(tfDict, idfDict, titleDict, N):
 def findIDF(tf,N):
     idf = {}
     for word in tf:
-        df = len(tf[word]) # document freq is can be the size of posting list for that term
+        df = len(tf[word]) # document freq is the size of posting list for that term
         idf[word] = math.log10(float(N)/float(df))+1
     return idf
     
@@ -275,7 +272,6 @@ def findTF(docs):
     docId = 1
     titleDocTF = {}
     replace_punctuation = string.maketrans(string.punctuation, ' '*len(string.punctuation))
-    #x = nltk.porter.PorterStemmer()
     wordWeight = 1
     for doc in docs:
         url = doc['Url']
