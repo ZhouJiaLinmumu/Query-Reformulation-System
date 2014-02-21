@@ -6,6 +6,7 @@ import json
 import sys
 from engine import keyWordEngine
 
+
 def main():
     while True:
         query = raw_input('Please enter the query you want to search for : ')
@@ -27,12 +28,12 @@ def main():
     bing_search(query, targetPrec)
 
 def bing_search(query,targetPrec):
-    query = query.replace(" ",'+')
-    print 'Updated query - ' + query
+    query = query.replace(" ","%20")
+    #print 'Updated query - ' + query
     print '==============================================================='
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27' + query + '%27&$top=10&$format=json'
     print bingUrl
-    #Provide your account key here
+    #GET THIS FROM INPUT
     accountKey = 'JsV9AIVwzY0l654YiaIXAppMcpvpm7lvkcYdmzJrNcs'
 
     accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
@@ -41,9 +42,18 @@ def bing_search(query,targetPrec):
     response = urllib2.urlopen(req)
     content = response.read()
     #print content
-    #content contains the json response from Bing. 
+    #content contains the json response from Bing.
+
     json_result = json.loads(content)
     result_list = json_result['d']['results']
+    
+    print "Parameters:"
+    print "Client key  =  " + accountKey
+    print "Query       =  " + query.replace("%20"," ")
+    print "Precision   =  " + str(targetPrec)
+    print "Url: " + bingUrl
+    print "Total no of results : " + str(len(result_list))
+    
     print getRelevantFB(query, result_list,targetPrec)
 
 def getRelevantFB(query, result_list, targetPrec):
@@ -53,19 +63,27 @@ def getRelevantFB(query, result_list, targetPrec):
     if len(result_list)<10:
         print 'There are less than 10 results to this query. So exiting.'
         sys.exit()
-        
+    print "Bing Search Results:"
+    print "======================"
+    num = 1
     for result in result_list:
         desc = result[u'Description'].encode("iso-8859-15", "replace")
         title = result[u'Title'].encode("iso-8859-15", "replace")
         url = result[u'Url'].encode("iso-8859-15", "replace")
-        print '\nTitle: ' + title + '\n' + 'Url: ' + url + '\n' + 'Desc: ' + desc
+        print "Result " + str(num)
+        print "["
+        print "URL: " + url
+        print "Title: " + title
+        print "Summary: " + desc
+        print "]"
+        num = num + 1
         entry = {}
         entry['Title'] = title
         entry['Description'] = desc
         entry['Url'] = url            
         
         while True:
-            isRel = raw_input('Is this link relevant to your search or not (y or n)?: ')
+            isRel = raw_input('Relevant (Y/N)?: ')
             if isRel == 'y' or isRel == 'Y':
                 userPrec = userPrec+1
                 relevant.append(entry)
@@ -78,15 +96,18 @@ def getRelevantFB(query, result_list, targetPrec):
 
             
     userPrec = userPrec/10
-    print '==============================================================='
-    print 'Precision from user relevance feedback - ' +str(userPrec)
+
+    print "FEEDBACK SUMMARY"
+    print "Query " + query.replace('%20',' ')
+    print "Precision from user relevance feedback - " + str(userPrec)
     print 'Target Precision - ' + str(targetPrec)
+    
     # If targetPrecision is achieved
     if userPrec == 0:
         print "Quitting as the relevance feedback score is zero."
         sys.exit()
     elif userPrec >= targetPrec:
-        print "Target precision achieved."
+        print "Desired precision reached, done"
         sys.exit()
     else:
         query = keyWordEngine(query,targetPrec,relevant,nonrel)
@@ -94,6 +115,9 @@ def getRelevantFB(query, result_list, targetPrec):
             print "Quitting as query is unchanged"
             sys.exit()
         else:
+            print "Still below the desired precision of 1.0"
+            print "Indexing results ...."
+            print "Indexing results ...."
             bing_search(query,targetPrec)
 
 if __name__ == "__main__":

@@ -13,9 +13,16 @@ stopwords = ['a', 'able', 'about', 'across', 'after', 'all', 'almost', 'also', '
              'twas', 'us', 'wants', 'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'would', 'yet',
              'you', 'your']
 
+alpha = 1
+beta = 0.75
+gamma = -0.15
+titleFactor = 0.2
+qualityFactor = 0.2
+qualityDocs = ['wikipedia.org']
 
 def keyWordEngine(query,targetPrec,relevant,nonrel):
-    query = query.replace('+',' ')
+     
+    query = query.replace('%20',' ')
 
     # finding N for calculating IDF
     N_Rel = len(relevant)
@@ -47,8 +54,8 @@ def keyWordEngine(query,targetPrec,relevant,nonrel):
 
     finalList = []
     
-    print 'New words added to query are - ' + first + ' ' + second
-    print 'Determining the best order of query terms'
+    print 'Augmented by ' + first + ' ' + second
+
     #original query modified
     query = query.split()
     if second=="":
@@ -94,37 +101,28 @@ def findPermutations(queryList,docRel):
         # find the number of times the permutation occurs in relevants docs 
         pairWeight[pair] = searchResults(pair,docRel)
     sortedPairs = sorted(pairWeight.items(), key=lambda x:x[1], reverse = True)
-    print sortedPairs
     # combine the pairs in order of decreasing weights.
     N = len(queryList)
     added = 0
     for pair in sortedPairs:
-        print '=== Pair '
-        print pair
         bestQueryList,added,useless = addPair(0, bestQueryList, pair[0],pair[1], added, useless)
         if added == N: # break if all query terms are added
             break
 
     bestQueryList.append(useless)        
-    print "Best order found is - "
-    print bestQueryList
+    #print "Best order found is - "
+    #print bestQueryList
     return bestQueryList
 
 def addPair(index ,QueryList, pair, weight, added, useless):
-    print '==== Querylist === '
-    print QueryList
-    print '==== end QueryList === '
     if len(QueryList)<=index:
-        print '=== main if' + ' '+ pair[0] + ' ' + pair[1]
         QueryList.append([])
         QueryList[index].append(pair[0])
         QueryList[index].append(pair[1])
-        print '=== main if end'
         added = added + 2
     else:
         n = len(QueryList[index])
         if (not isNewWord(pair[0], QueryList)) and (not isNewWord(pair[1], QueryList)):
-            print '===== in 1st'
             return QueryList,added,useless
         if pair[0]==QueryList[index][n-1]:
             if(weight==0):
@@ -132,43 +130,32 @@ def addPair(index ,QueryList, pair, weight, added, useless):
             else:
                 QueryList[index].append(pair[1])
             added = added + 1
-            print '===== in 2nd'
         elif pair[1]==QueryList[index][0]:
             if(weight==0):
                 useless.add(pair[0])
             else:
                 QueryList[index].insert(0,pair[0])
             added = added + 1
-            print '===== in 3rd'
         elif pair[0]==QueryList[index][0] and isNewWord(pair[1], QueryList):
             if(weight==0):
                 useless.add(pair[1])
             else:
                 QueryList[index].append(pair[1])
             added = added + 1
-            print '===== in 3.5rd'
         elif isNewWord(pair[0], QueryList) and isNewWord(pair[1],QueryList):
-            print '===== in 4th'
             if(weight==0):
                 useless.add(pair[0])
                 useless.add(pair[1])
             else:
                 QueryList,added,useless = addPair(index+1, QueryList,pair, weight, added, useless)
         else:
-            print '==== in 5th'                
             if isNewWord(pair[0],QueryList):
-                print '==== in 6th'
                 useless.add(pair[0])
             elif isNewWord(pair[1],QueryList):
-                print '==== in 7th'
                 useless.add(pair[1])
             #else if only one word of the pair is in the middle of the query then ignore that pair and leave the other word </3
             #else if first word in pair equals first word inquerylist, or vice versa, ignore
-
-    print '==== Return Querylist === '
-    print QueryList
-    print useless
-    print '==== Return end QueryList === '
+                
     return QueryList,added,useless
 
 def isNewWord(word, QueryList):
@@ -178,9 +165,6 @@ def isNewWord(word, QueryList):
     return True
 
 def findWords(RelDoc, NonrelDoc, query):
-    alpha = 1
-    beta = 0.75
-    gamma = -0.15
 
     finalWeight = {}
     first = ''
@@ -206,8 +190,7 @@ def findWords(RelDoc, NonrelDoc, query):
 
     # find top 10 words(excluding query terms) from the finalweights using a heap, runs faster than sorting the whole list
     #sortWeights = sorted(finalWeight.items(), key=lambda x:x[1], reverse = True)
-    sortWeights = heapq.nlargest(10 + len(query),finalWeight,key=finalWeight.get);
-    print sortWeights
+    sortWeights = heapq.nlargest(10 + len(query),finalWeight,key=finalWeight.get)
 
     #Finding top two words by weigths such that the word is not in query
     i = 0
@@ -259,7 +242,7 @@ def findWeights(tfDict, idfDict, titleDict, N):
             tfTotal = tfTotal + tfDict[word][doc]
         weight[word] = tfTotal * idf
         if word in titleDict: # give more weightage to title words
-            weight[word] = weight[word]*(1 + (float(titleDict[word])/float(N))*0.2)        
+            weight[word] = weight[word]*(1 + (float(titleDict[word])/float(N))*titleFactor)        
     return weight
 
 
@@ -293,14 +276,19 @@ def findTF(docs):
     titleDocTF = {}
     replace_punctuation = string.maketrans(string.punctuation, ' '*len(string.punctuation))
     #x = nltk.porter.PorterStemmer()
-    wikiFactor = 1
+    wordWeight = 1
     for doc in docs:
         url = doc['Url']
-        if re.match(r'.*wikipedia\.org.*', url):
-            wikiFactor = 1.2
-            print "wiki factor changed"
-        else:
-            wikiFactor = 1
+        #if the url has the word from quality documents list, then improve the weight by a factor of 0.2
+        for domain in qualityDocs:
+            if re.match(r'.*'+re.escape(domain)+'.*', url):
+                wordWeight = 1 + qualityFactor
+                print "wordWeight changed"
+                break
+                
+            else:
+                wordWeight = 1
+            
         vocab = doc['Description']+' '+doc['Title']
         title = doc['Title']
         #Converting to lowercase
@@ -320,8 +308,6 @@ def findTF(docs):
                 titleDocTF[word] = 1
                 repeat[word] = 1
         
-        #### Try to figure out how we can give more weightage to title
-        #### Also may be give wikipedia url more weightage
 
         #Converting to lowercase
         vocab = vocab.lower()
@@ -341,7 +327,7 @@ def findTF(docs):
            #Adding to dictionary
             if word in tf:
                 if docId in tf[word]:
-                    tf[word][docId] = tf[word][docId] + 1 * wikiFactor
+                    tf[word][docId] = tf[word][docId] + 1 * wordWeight
                 else:
                     tf[word][docId] = 1
             else:
