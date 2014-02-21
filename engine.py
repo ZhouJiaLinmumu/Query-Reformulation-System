@@ -103,16 +103,17 @@ def findPermutations(queryList,docRel):
         # find the number of times the permutation occurs in relevants docs 
         pairWeight[pair] = searchResults(pair,docRel)
     sortedPairs = sorted(pairWeight.items(), key=lambda x:x[1], reverse = True)
+
+    
     # combine the pairs in order of decreasing weights.
     N = len(queryList)
 
     for pair in sortedPairs:
         bestQueryList,useless = addPair(0, bestQueryList, pair[0],pair[1], useless)
+        
 
     bestQueryList.append(useless)
-    
-    print "Best order found is - "
-    print bestQueryList
+
     return bestQueryList
 
 def addPair(index ,QueryList, pair, weight, useless):
@@ -136,13 +137,8 @@ def addPair(index ,QueryList, pair, weight, useless):
                 QueryList[index].insert(0,pair[0])
 
         elif pair[0] not in QueryList[index] and pair[1] not in QueryList[index]:
-            if(weight==0):
-                useless.add(pair[0])
-                useless.add(pair[1])
-            else:
-                QueryList,useless = addPair(index+1, QueryList,pair, weight, useless)
-
-                            
+            QueryList,useless = addPair(index+1, QueryList,pair, weight, useless)
+                           
     return QueryList,useless
 
 def isNewWord(word, QueryList, useless):

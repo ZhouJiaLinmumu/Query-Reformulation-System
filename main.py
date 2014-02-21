@@ -105,7 +105,7 @@ def getRelevantFB(query, result_list, targetPrec):
         print "Desired precision reached, done"
         sys.exit()
     else:
-		print "Indexing results ...."
+        print "Indexing results ...."
         query = keyWordEngine(query,targetPrec,relevant,nonrel)
         if query == '':
             print "Quitting as query is unchanged"
